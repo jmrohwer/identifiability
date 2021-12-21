@@ -4,7 +4,7 @@ This module performs parameter identifiability
 analysis to calculate and plot confidence intervals based on a profile-likelihood. 
 The code is adapted from [LMFIT](https://lmfit.github.io/lmfit-py/), with custom
 functions to select the range for parameter scanning and for plotting the profile 
-likelihood. The significance is assessed with 
+likelihood. The significance is assessed with the chi-squared distribution.
 
 ## Installation
 
