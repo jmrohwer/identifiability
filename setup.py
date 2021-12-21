@@ -27,7 +27,7 @@ setup(  # Distribution meta-data
     author='Johann M. Rohwer',
     author_email='j.m.rohwer@gmail.com',
     url='https://github.com/jmrohwer/identifiability/',
-    download_url='https://pypi.org/project/pyparsing/',
+    download_url='https://github.com/jmrohwer/identifiability/archive/refs/tags/v0.1.zip',
     license='New BSD',
     py_modules=modules,
     python_requires='>=3.6',
