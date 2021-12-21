@@ -4,9 +4,7 @@
 
 from setuptools import setup
 
-# get __version__ from version.py
-with open('pysces/version.py') as f:
-    exec(f.read())
+__version__ = 0.1
 
 # The directory containing this file
 README_name = __file__.replace('setup.py', 'README.md')
