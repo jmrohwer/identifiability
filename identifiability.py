@@ -7,8 +7,6 @@ from lmfit, with custom functions to select the range for parameter scanning and
 for plotting the profile likelihood.
 """
 
-__version__ = 0.1
-
 from collections import OrderedDict
 from lmfit.minimizer import MinimizerException
 import numpy as np

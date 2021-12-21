@@ -3,7 +3,10 @@
 """Setup script for the identifiability module distribution."""
 
 from setuptools import setup
-from identifiability import __version__ as identifiability_version
+
+# get __version__ from version.py
+with open('pysces/version.py') as f:
+    exec(f.read())
 
 # The directory containing this file
 README_name = __file__.replace('setup.py', 'README.md')
@@ -20,10 +23,10 @@ modules = ['identifiability']
 
 setup(  # Distribution meta-data
     name='identifiability',
-    version=identifiability_version,
+    version=__version__,
     description='Parameter identifiability analysis in Python',
     long_description=identifiability_main_doc,
-    author='Johann Rohwer',
+    author='Johann M. Rohwer',
     author_email='j.m.rohwer@gmail.com',
     url='https://github.com/jmrohwer/identifiability/',
     download_url='https://pypi.org/project/pyparsing/',

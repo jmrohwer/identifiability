@@ -1,10 +1,10 @@
 # identifiability - Parameter identifiability analysis in Python
 
-This module contains Custom functions for performing parameter identifiability
-analysis to calculate and plot confidence intervals based on a profile-likelihood 
-analysis. Adapted from [LMFIT](https://lmfit.github.io/lmfit-py/), with custom
+This module performs parameter identifiability
+analysis to calculate and plot confidence intervals based on a profile-likelihood. 
+The code is adapted from [LMFIT](https://lmfit.github.io/lmfit-py/), with custom
 functions to select the range for parameter scanning and for plotting the profile 
-likelihood.
+likelihood. The significance is assessed with 
 
 ## Installation
 
@@ -100,3 +100,5 @@ def conf_interval(
         Instantiated ``ConfidenceInterval`` class to access the attached methods.
     """
 ```
+
+© Johann M. Rohwer, December 2021
