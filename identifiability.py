@@ -57,16 +57,16 @@ class ConfidenceInterval:
 
         self.trace_dict = {i: {} for i in self.p_names}
 
-    def calc_all_ci(self, limits=0.5, points=11):
+    def calc_all_ci(self, limits=0.5, points=11, method='leastsq'):
         """Calculate all confidence intervals."""
         self.ci_values = OrderedDict()
 
         for p in self.p_names:
-            self.ci_values[p] = self.calc_ci(p, limits, points)
+            self.ci_values[p] = self.calc_ci(p, limits, points, method)
 
         return self.ci_values
 
-    def calc_ci(self, para, limits, points):
+    def calc_ci(self, para, limits, points, method='leastsq'):
         """Calculate the CI for a single parameter."""
         if isinstance(para, str):
             para = self.params[para]
@@ -88,7 +88,9 @@ class ConfidenceInterval:
 
         for val in para_vals:
             self.trace_dict[para.name]['value'].append(val)
-            self.trace_dict[para.name]['dchi'].append(self.calc_dchi(para, val))
+            self.trace_dict[para.name]['dchi'].append(
+                self.calc_dchi(para, val, method)
+            )
 
         para.vary = True
         self.reset_vals()
@@ -102,7 +104,15 @@ class ConfidenceInterval:
         else:
             allx = np.linspace(xx[0], xx[-1], 20000)
 
-        return (allx[spl(allx) <= t][0], allx[spl(allx) <= t][-1])
+        lo = allx[spl(allx) <= t][0]
+        hi = allx[spl(allx) <= t][-1]
+
+        # catch non-identifiable cases
+        if lo == xx[0]:
+            lo = np.nan
+        if hi == xx[-1]:
+            hi = np.nan
+        return lo, hi
 
     def reset_vals(self):
         """Reset parameter values to best-fit values."""
@@ -111,7 +121,7 @@ class ConfidenceInterval:
                 para_key
             ]
 
-    def calc_dchi(self, para, val, restore=False):
+    def calc_dchi(self, para, val, method='leastsq', restore=False):
         """
         Calculate the normalised delta chi-squared for 
         a given parameter value.
@@ -122,7 +132,7 @@ class ConfidenceInterval:
         save_para = self.params[para.name]
         self.params[para.name] = para
         self.minimizer.prepare_fit(self.params)
-        out = self.minimizer.leastsq()
+        out = self.minimizer.minimize(method=method)
         dchi = self.dchi(self.result, out)
         self.params[para.name] = save_para
         return dchi
@@ -132,8 +142,6 @@ class ConfidenceInterval:
         Return the normalised delta chi-squared between the best fit
         and the new fit.
         """
-        nfree = best_fit.nfree
-        nfix = best_fit.nvarys - new_fit.nvarys
         dchi = new_fit.chisqr / best_fit.chisqr - 1.0
         return dchi
 
@@ -160,7 +168,12 @@ class ConfidenceInterval:
         ax.plot(allx, spl(allx), '-', lw=1)
         ax.axhline(t, color='k', ls='--', lw=0.5)
         ax.axvline(self.params[para].value, color='k', ls='-', lw=0.5)
-        ax.axvspan(*self.ci_values[para], alpha=0.1, color='b')
+        lo, hi = self.ci_values[para]
+        if np.isnan(lo):
+            lo = ax.get_xlim()[0]
+        if np.isnan(hi):
+            hi = ax.get_xlim()[1]
+        ax.axvspan(lo, hi, alpha=0.1, color='b')
         if self.log:
             ax.semilogx()
         ax.set_xlabel('Parameter value')
@@ -176,6 +189,7 @@ def conf_interval(
     limits=0.5,
     log=False,
     points=11,
+    method='leastsq',
     return_CIclass=False,
 ):
     """
@@ -210,6 +224,8 @@ def conf_interval(
     points : int, optional
         The number of points for which to calculate the profile likelihood over
         the given parameter range.
+    method : str, optional
+        The lmfit mimimize() method to use (default='leastsq')
     return_CIclass : bool, optional
         When true, return the instantiated ``ConfidenceInterval`` class to
         access its methods directly (default=False).
@@ -224,7 +240,7 @@ def conf_interval(
     """
     assert (limits > 0) & (limits < 1), 'Please select a limits value between 0 and 1.'
     ci = ConfidenceInterval(minimizer, result, p_names, prob, log)
-    output = ci.calc_all_ci(limits, points)
+    output = ci.calc_all_ci(limits, points, method=method)
     if return_CIclass:
         return output, ci
     return output
