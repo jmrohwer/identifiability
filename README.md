@@ -11,7 +11,7 @@ likelihood. The significance is assessed with the chi-squared distribution.
 `identifiability` is a pure-Python module. The latest development version can be 
 installed with
 ```bash
-$ pip install git+https://github.com/jmrohwer/identifiability
+$ pip install https://github.com/jmrohwer/identifiability/archive/refs/heads/main.zip
 ```
 
 The latest stable release is available with
@@ -38,7 +38,7 @@ A typical workflow would entail:
 >>> c = conf_interval(
         mini, result, prob=0.95, limits=0.5, log=False, points=11, return_CIclass=True
     )
->>> print c[0]  # OrderedDict of parameter names and corresponding confidence intervals
+>>> print(c[0])  # OrderedDict of parameter names and corresponding confidence intervals
 >>> c[1].plot_ci('a')  # plot confidence interval for parameter 'a'
 ```
 
