@@ -42,6 +42,9 @@ class ConfidenceInterval:
         self.p_names = p_names
         self.fit_params = [self.params[p] for p in self.p_names]
 
+        assert (
+            (type(prob) == float) & (prob > 0) & (prob < 1)
+        ), 'Please provide a probability value between 0 and 1.'
         self.prob = prob
         self.log = log
 
