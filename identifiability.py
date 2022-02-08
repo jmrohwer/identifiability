@@ -86,9 +86,7 @@ class ConfidenceInterval:
                 np.log10(para.value * limits), np.log10(para.value / limits), points,
             )
         else:
-            para_vals = np.linspace(
-                (1 - limits) * para.value, (1 + limits) * para.value, points
-            )
+            para_vals = np.linspace(limits * para.value, (2 - limits) * para.value, points)
 
         para.vary = False
         threshold = self.calc_threshold()
@@ -225,8 +223,8 @@ def conf_interval(
     limits : float, optional
         The limits (as a fraction of the original parameter value) within which
         to vary the parameters for identifiability analysis (default is 0.5).
-        If ``log=False``, the parameter is varied from (1 - limits)*p to
-        (1 + limits)*p, where p is the original value.
+        If ``log=False``, the parameter is varied from p*limits to p*(2 - limits),
+        where p is the original value.
         If ``log=True``, the parameter is varied from p*limits to p/limits.
     log : bool, optional
         Whether to vary the parameter in a log (True) or a linear (False,
