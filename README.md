@@ -71,22 +71,23 @@ def conf_interval(
     limits=0.5,
     log=False,
     points=11,
+    method='leastsq',
     return_CIclass=False,
 ):
     """
     Calculate the confidence interval (CI) for parameters.
-    
+
     The parameter for which the CI is calculated will be varied, while the
     remaining parameters are re-optimized to minimize the chi-square. The
     resulting chi-square is used to calculate the probability with a given
     statistic, i.e. chi-squared test.
-    
+
     Parameters
     ----------
-    minimizer : Minimizer
+    minimizer : Minimizer or ModelResult
         The minimizer to use, holding objective function.
-    result : MinimizerResult
-        The result of running minimize().
+    result : MinimizerResult or ModelResult
+        The result of running Minimizer.minimize() or Model.fit().
     p_names : list, optional
         Names of the parameters for which the CI is calculated. If None
         (default), the CI is calculated for every parameter.
@@ -94,29 +95,31 @@ def conf_interval(
         The probability for the confidence interval (<1). If None,
         the default is 0.95 (95 % confidence interval).
     limits : float, optional
-        The limits (as a fraction of the original parameter value) within which 
-        to vary the parameters for identifiability analysis (default is 0.5). 
+        The limits (as a fraction of the original parameter value) within which
+        to vary the parameters for identifiability analysis (default is 0.5).
         If ``log=False``, the parameter is varied from (1 - limits)*p to
         (1 + limits)*p, where p is the original value.
         If ``log=True``, the parameter is varied from p*limits to p/limits.
     log : bool, optional
-        Whether to vary the parameter in a log (True) or a linear (False, 
+        Whether to vary the parameter in a log (True) or a linear (False,
         default) scale.
     points : int, optional
         The number of points for which to calculate the profile likelihood over
         the given parameter range.
+    method : str, optional
+        The lmfit mimimize() method to use (default='leastsq')
     return_CIclass : bool, optional
-        When true, return the instantiated ``ConfidenceInterval`` class to 
+        When true, return the instantiated ``ConfidenceInterval`` class to
         access its methods directly (default=False).
-    
+
     Returns
     -------
     output : dict
-        A dictionary containing a list of ``(lower, upper)``-tuples containing 
+        A dictionary containing a list of ``(lower, upper)``-tuples containing
         the confidence bounds for each parameter.
     ci : ``ConfidenceInterval`` instance, optional
         Instantiated ``ConfidenceInterval`` class to access the attached methods.
     """
 ```
 
-© Johann M. Rohwer, December 2021
+© Johann M. Rohwer, February 2022

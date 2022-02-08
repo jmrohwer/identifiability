@@ -215,7 +215,7 @@ def conf_interval(
     minimizer : Minimizer or ModelResult
         The minimizer to use, holding objective function.
     result : MinimizerResult or ModelResult
-        The result of running minimize().
+        The result of running Minimizer.minimize() or Model.fit().
     p_names : list, optional
         Names of the parameters for which the CI is calculated. If None
         (default), the CI is calculated for every parameter.
