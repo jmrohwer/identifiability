@@ -16,7 +16,7 @@ $ pip install https://github.com/jmrohwer/identifiability/archive/refs/heads/mai
 
 The latest stable release is available with
 ```bash
-$ pip install https://github.com/jmrohwer/identifiability/archive/refs/tags/v0.1.zip
+$ pip install https://github.com/jmrohwer/identifiability/archive/refs/tags/v0.2.zip
 ```
 
 ## Basic usage

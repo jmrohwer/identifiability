@@ -14,7 +14,7 @@ import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
 
-__version__ = 0.1
+__version__ = 0.2
 
 CONF_ERR_GEN = 'Cannot determine Confidence Intervals'
 CONF_ERR_STDERR = '%s without sensible uncertainty estimates' % CONF_ERR_GEN
