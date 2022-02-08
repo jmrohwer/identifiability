@@ -8,7 +8,8 @@ for plotting the profile likelihood.
 """
 
 from collections import OrderedDict
-from lmfit.minimizer import MinimizerException
+from lmfit.minimizer import Minimizer, MinimizerResult, MinimizerException
+from lmfit.model import ModelResult
 import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
@@ -24,6 +25,12 @@ class ConfidenceInterval:
     """Class used to calculate the confidence interval."""
 
     def __init__(self, minimizer, result, p_names=None, prob=None, log=False):
+        assert isinstance(minimizer, Minimizer) or isinstance(
+            minimizer, ModelResult
+        ), 'minimizer must be instance of `lmfit.minimizer.Minimizer` or `lmfit.model.ModelResult`'
+        assert isinstance(result, MinimizerResult) or isinstance(
+            result, ModelResult
+        ), 'result must be instance of `lmfit.minimizer.MinimizerResult` or `lmfit.model.ModelResult`'
         self.minimizer = minimizer
         self.result = result
         self.params = result.params.copy()
@@ -205,9 +212,9 @@ def conf_interval(
 
     Parameters
     ----------
-    minimizer : Minimizer
+    minimizer : Minimizer or ModelResult
         The minimizer to use, holding objective function.
-    result : MinimizerResult
+    result : MinimizerResult or ModelResult
         The result of running minimize().
     p_names : list, optional
         Names of the parameters for which the CI is calculated. If None

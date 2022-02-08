@@ -26,11 +26,20 @@ intervals* in the [LMFIT documentation](https://lmfit.github.io/lmfit-py/confide
 
 To start the indentifiability analysis, the user first needs to have performed a 
 parameter estimation with LMFIT. The method for estimating confidence intervals 
-takes an instantiated 
-[LMFIT Mimimizer](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.Minimizer)
-object and an 
-[LMFIT mimimizer result](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.MinimizerResult)
+takes an instantiated LMFIT 
+[Mimimizer](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.Minimizer)
+object and a 
+[MinimizerResult](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.MinimizerResult)
 object as input.
+
+When using the [Model](https://lmfit.github.io/lmfit-py/model.html) wrapper of LMFIT 
+to perform the parameter estimation and model fit, the instantiated 
+[ModelResult](https://lmfit.github.io/lmfit-py/model.html#lmfit.model.ModelResult)
+object should be passed twice to the `conf_interval()` method, instead of the
+[Mimimizer](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.Minimizer)
+and 
+[MinimizerResult](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.MinimizerResult)
+(see above).
 
 A typical workflow would entail:
 ```python
@@ -40,6 +49,15 @@ A typical workflow would entail:
     )
 >>> print(c[0])  # OrderedDict of parameter names and corresponding confidence intervals
 >>> c[1].plot_ci('a')  # plot confidence interval for parameter 'a'
+```
+
+When using the [Model](https://lmfit.github.io/lmfit-py/model.html) class, the 
+function call would be:
+```python
+>>> c = conf_interval(
+        modelresult, modelresult, prob=0.95, limits=0.5, 
+        log=False, points=11, return_CIclass=True
+    )
 ```
 
 ### Docstring of the `conf_interval` method
