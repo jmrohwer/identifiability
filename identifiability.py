@@ -50,7 +50,7 @@ class ConfidenceInterval:
         self.fit_params = [self.params[p] for p in self.p_names]
 
         if not prob:
-            prob=0.95
+            prob = 0.95
         assert (
             (type(prob) == float) & (prob > 0) & (prob < 1)
         ), 'Please provide a probability value between 0 and 1.'
@@ -74,54 +74,57 @@ class ConfidenceInterval:
         self.method = method
         self.ci_values = OrderedDict()
 
-        for p in self.p_names:
-            self.ci_values[p] = self.calc_ci(p, limits, points, mp)
-
-        return self.ci_values
-
-    def calc_ci(self, para, limits, points, mp=True):
-        """Calculate the CI for a single parameter."""
-        if isinstance(para, str):
-            para = self.params[para]
-
-        if self.log:
-            para_vals = np.logspace(
-                np.log10(para.value * limits), np.log10(para.value / limits), points,
-            )
-        else:
-            para_vals = np.linspace(limits * para.value, (2 - limits) * para.value, points)
-
-        para.vary = False
-        threshold = self.calc_threshold()
-        self.trace_dict[para.name]['value'] = []
-        self.trace_dict[para.name]['dchi'] = []
-        self.trace_dict[para.name]['threshold'] = threshold
-
         if mp:
             proc_pool = Pool()
             arl = []
-            for val in para_vals:
-                self.trace_dict[para.name]['value'].append(val)
-                arl.append(proc_pool.apply_async(self._calc_dchi, args=(self, para, val)))
-            arl[-1].wait()
-            result = []
-            for ar in arl:
-                result.append(ar.get())
-            proc_pool.close()
-            self.trace_dict[para.name]['dchi'] = result
-        else:
-            for val in para_vals:
-                self.trace_dict[para.name]['value'].append(val)
-                self.trace_dict[para.name]['dchi'].append(
-                    self.calc_dchi(para, val)
+
+        results = []
+
+        for para in self.p_names:
+            if isinstance(para, str):
+                para = self.params[para]
+
+            if self.log:
+                para_vals = np.logspace(
+                    np.log10(para.value * limits), np.log10(para.value / limits), points,
                 )
+            else:
+                para_vals = np.linspace(limits * para.value, (2 - limits) * para.value, points)
 
-        para.vary = True
-        self.reset_vals()
+            para.vary = False
+            threshold = self.calc_threshold()
+            self.trace_dict[para.name]['value'] = []
+            self.trace_dict[para.name]['dchi'] = []
+            self.trace_dict[para.name]['threshold'] = threshold
 
-        xx = self.trace_dict[para.name]['value']
-        yy = self.trace_dict[para.name]['dchi']
-        t = self.trace_dict[para.name]['threshold']
+            for val in para_vals:
+                self.trace_dict[para.name]['value'].append(val)
+                if mp:
+                    arl.append(proc_pool.apply_async(self._calc_dchi, args=(self, para, val)))
+                else:
+                    results.append(self.calc_dchi(para, val))
+
+            para.vary = True
+            self.reset_vals()
+
+        if mp:
+            arl[-1].wait()
+            for ar in arl:
+                results.append(ar.get())
+            proc_pool.close()
+
+        for (para, dchi) in results:
+            self.trace_dict[para.name]['dchi'].append(dchi)
+
+        for p in self.p_names:
+            self.ci_values[p] = self.process_ci(p)
+
+        return self.ci_values
+
+    def process_ci(self, p_name):
+        xx = self.trace_dict[p_name]['value']
+        yy = self.trace_dict[p_name]['dchi']
+        t = self.trace_dict[p_name]['threshold']
         spl = sp.interpolate.UnivariateSpline(xx, yy, k=2, s=0)
         if self.log:
             allx = np.logspace(np.log10(xx[0]), np.log10(xx[-1]), 20000)
@@ -151,6 +154,7 @@ class ConfidenceInterval:
         Static method to calculate the normalised delta chi-squared
         using multiprocessing.
         """
+        para.vary = False
         para.value = val
         save_para = ci_instance.params[para.name]
         ci_instance.params[para.name] = para
@@ -158,7 +162,8 @@ class ConfidenceInterval:
         out = ci_instance.minimizer.minimize(method=ci_instance.method)
         dchi = ci_instance.dchi(ci_instance.result, out)
         ci_instance.params[para.name] = save_para
-        return dchi
+        para.vary = True
+        return para, dchi
 
     def calc_dchi(self, para, val, restore=False):
         """
@@ -174,7 +179,7 @@ class ConfidenceInterval:
         out = self.minimizer.minimize(method=self.method)
         dchi = self.dchi(self.result, out)
         self.params[para.name] = save_para
-        return dchi
+        return para, dchi
 
     def dchi(self, best_fit, new_fit):
         """
