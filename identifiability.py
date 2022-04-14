@@ -13,6 +13,7 @@ from lmfit.model import ModelResult
 import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
+from multiprocessing import Pool
 
 __version__ = 0.2
 
@@ -43,12 +44,13 @@ class ConfidenceInterval:
 
         self.best_chi = result.chisqr
 
-        if p_names is None:
+        if not p_names:
             p_names = [i for i in self.params if self.params[i].vary]
-
         self.p_names = p_names
         self.fit_params = [self.params[p] for p in self.p_names]
 
+        if not prob:
+            prob=0.95
         assert (
             (type(prob) == float) & (prob > 0) & (prob < 1)
         ), 'Please provide a probability value between 0 and 1.'
@@ -67,16 +69,17 @@ class ConfidenceInterval:
 
         self.trace_dict = {i: {} for i in self.p_names}
 
-    def calc_all_ci(self, limits=0.5, points=11, method='leastsq'):
+    def calc_all_ci(self, limits=0.5, points=11, method='leastsq', mp=True):
         """Calculate all confidence intervals."""
+        self.method = method
         self.ci_values = OrderedDict()
 
         for p in self.p_names:
-            self.ci_values[p] = self.calc_ci(p, limits, points, method)
+            self.ci_values[p] = self.calc_ci(p, limits, points, mp)
 
         return self.ci_values
 
-    def calc_ci(self, para, limits, points, method='leastsq'):
+    def calc_ci(self, para, limits, points, mp=True):
         """Calculate the CI for a single parameter."""
         if isinstance(para, str):
             para = self.params[para]
@@ -94,11 +97,24 @@ class ConfidenceInterval:
         self.trace_dict[para.name]['dchi'] = []
         self.trace_dict[para.name]['threshold'] = threshold
 
-        for val in para_vals:
-            self.trace_dict[para.name]['value'].append(val)
-            self.trace_dict[para.name]['dchi'].append(
-                self.calc_dchi(para, val, method)
-            )
+        if mp:
+            proc_pool = Pool()
+            arl = []
+            for val in para_vals:
+                self.trace_dict[para.name]['value'].append(val)
+                arl.append(proc_pool.apply_async(self._calc_dchi, args=(self, para, val)))
+            arl[-1].wait()
+            result = []
+            for ar in arl:
+                result.append(ar.get())
+            proc_pool.close()
+            self.trace_dict[para.name]['dchi'] = result
+        else:
+            for val in para_vals:
+                self.trace_dict[para.name]['value'].append(val)
+                self.trace_dict[para.name]['dchi'].append(
+                    self.calc_dchi(para, val)
+                )
 
         para.vary = True
         self.reset_vals()
@@ -129,7 +145,22 @@ class ConfidenceInterval:
                 para_key
             ]
 
-    def calc_dchi(self, para, val, method='leastsq', restore=False):
+    @staticmethod
+    def _calc_dchi(ci_instance, para, val):
+        """
+        Static method to calculate the normalised delta chi-squared
+        using multiprocessing.
+        """
+        para.value = val
+        save_para = ci_instance.params[para.name]
+        ci_instance.params[para.name] = para
+        ci_instance.minimizer.prepare_fit(ci_instance.params)
+        out = ci_instance.minimizer.minimize(method=ci_instance.method)
+        dchi = ci_instance.dchi(ci_instance.result, out)
+        ci_instance.params[para.name] = save_para
+        return dchi
+
+    def calc_dchi(self, para, val, restore=False):
         """
         Calculate the normalised delta chi-squared for 
         a given parameter value.
@@ -140,7 +171,7 @@ class ConfidenceInterval:
         save_para = self.params[para.name]
         self.params[para.name] = para
         self.minimizer.prepare_fit(self.params)
-        out = self.minimizer.minimize(method=method)
+        out = self.minimizer.minimize(method=self.method)
         dchi = self.dchi(self.result, out)
         self.params[para.name] = save_para
         return dchi
@@ -199,6 +230,7 @@ def conf_interval(
     points=11,
     method='leastsq',
     return_CIclass=False,
+    mp = True,
 ):
     """
     Calculate the confidence interval (CI) for parameters.
@@ -237,6 +269,8 @@ def conf_interval(
     return_CIclass : bool, optional
         When true, return the instantiated ``ConfidenceInterval`` class to
         access its methods directly (default=False).
+    mp : bool, optional
+        Run the optimization in parallel using ``multiprocessing`` (default=True)
 
     Returns
     -------
@@ -248,7 +282,7 @@ def conf_interval(
     """
     assert (limits > 0) & (limits < 1), 'Please select a limits value between 0 and 1.'
     ci = ConfidenceInterval(minimizer, result, p_names, prob, log)
-    output = ci.calc_all_ci(limits, points, method=method)
+    output = ci.calc_all_ci(limits, points, method=method, mp=mp)
     if return_CIclass:
         return output, ci
     return output
