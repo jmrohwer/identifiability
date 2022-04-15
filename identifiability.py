@@ -235,7 +235,7 @@ def conf_interval(
     points=11,
     method='leastsq',
     return_CIclass=False,
-    mp = True,
+    mp=True,
 ):
     """
     Calculate the confidence interval (CI) for parameters.

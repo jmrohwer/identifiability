@@ -4,7 +4,8 @@ This module performs parameter identifiability
 analysis to calculate and plot confidence intervals based on a profile-likelihood. 
 The code is adapted from [LMFIT](https://lmfit.github.io/lmfit-py/), with custom
 functions to select the range for parameter scanning and for plotting the profile 
-likelihood. The significance is assessed with the chi-squared distribution.
+likelihood. The significance is assessed with the chi-squared distribution. 
+Optimization runs can be performed in parallel (using the `multiprocessing` module).
 
 ## Installation
 
@@ -14,9 +15,9 @@ installed with
 $ pip install https://github.com/jmrohwer/identifiability/archive/refs/heads/main.zip
 ```
 
-The latest stable release is available with
+The latest stable release is available on PyPI:
 ```bash
-$ pip install https://github.com/jmrohwer/identifiability/archive/refs/tags/v0.2.zip
+$ pip install identifiability
 ```
 
 ## Basic usage
@@ -73,6 +74,7 @@ def conf_interval(
     points=11,
     method='leastsq',
     return_CIclass=False,
+    mp=True,
 ):
     """
     Calculate the confidence interval (CI) for parameters.
@@ -111,6 +113,8 @@ def conf_interval(
     return_CIclass : bool, optional
         When true, return the instantiated ``ConfidenceInterval`` class to
         access its methods directly (default=False).
+    mp : bool, optional
+        Run the optimization in parallel using ``multiprocessing`` (default=True)
 
     Returns
     -------
@@ -122,4 +126,4 @@ def conf_interval(
     """
 ```
 
-© Johann M. Rohwer, February 2022
+© Johann M. Rohwer, 2022
