@@ -15,7 +15,7 @@ import scipy as sp
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
 
-__version__ = 0.2
+__version__ = 0.3
 
 CONF_ERR_GEN = 'Cannot determine Confidence Intervals'
 CONF_ERR_STDERR = '%s without sensible uncertainty estimates' % CONF_ERR_GEN

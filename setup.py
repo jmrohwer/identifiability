@@ -4,7 +4,7 @@
 
 from setuptools import setup
 
-__version__ = 0.2
+__version__ = 0.3
 
 # The directory containing this file
 README_name = __file__.replace('setup.py', 'README.md')
@@ -23,6 +23,7 @@ setup(  # Distribution meta-data
     name='identifiability',
     version=__version__,
     description='Parameter identifiability analysis in Python',
+    long_description_content_type="text/markdown",
     long_description=identifiability_main_doc,
     author='Johann M. Rohwer',
     author_email='j.m.rohwer@gmail.com',
