@@ -49,7 +49,8 @@ A typical workflow would entail:
         mini, result, prob=0.95, limits=0.5, log=False, points=11, return_CIclass=True
     )
 >>> print(c[0])  # OrderedDict of parameter names and corresponding confidence intervals
->>> c[1].plot_ci('a')  # plot confidence interval for parameter 'a'
+>>> c[1].plot_ci('a')   # plot confidence interval for parameter 'a'
+>>> c[1].plot_all_ci()  # plot confidence intervals for all parameters
 ```
 
 When using the [Model](https://lmfit.github.io/lmfit-py/model.html) class, the 

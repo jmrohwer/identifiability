@@ -200,9 +200,10 @@ class ConfidenceInterval:
         threshold = threshold_scaled * nfix / nfree
         return threshold
 
-    def plot_ci(self, para):
+    def plot_ci(self, para, ax=None):
         assert para in self.p_names, 'para must be one of ' + str(self.p_names)
-        f, ax = plt.subplots()
+        if not ax:
+            f, ax = plt.subplots()
         xx = self.trace_dict[para]['value']
         yy = self.trace_dict[para]['dchi']
         t = self.trace_dict[para]['threshold']
@@ -224,6 +225,26 @@ class ConfidenceInterval:
         ax.set_ylabel(r'$\chi^2\left/\chi^2_0\right. - 1$')
         ax.set_title(para)
 
+    def plot_all_ci(self):
+        num = len(self.p_names)
+        numcols = 3
+        numrows = num // numcols + 1
+        f, ax = plt.subplots(nrows=numrows, ncols=numcols, figsize=(9, 2.5*numrows))
+        for i in range(num):
+            if num <= numcols:
+                theax = ax[i]
+            else:
+                theax = ax[i//numcols, i%numcols]
+            self.plot_ci(self.p_names[i], ax=theax)
+        # remove empty axes
+        empty = numcols - num%numcols
+        if empty != 0:
+            for i in range(-empty, 0):
+                if num <= numcols:
+                    ax[i].set_visible(False)
+                else:
+                    ax[num // numcols, i].set_visible(False)
+        f.tight_layout()
 
 def conf_interval(
     minimizer,
