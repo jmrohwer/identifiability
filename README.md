@@ -28,19 +28,10 @@ intervals* in the [LMFIT documentation](https://lmfit.github.io/lmfit-py/confide
 To start the indentifiability analysis, the user first needs to have performed a 
 parameter estimation with LMFIT. The method for estimating confidence intervals 
 takes an instantiated LMFIT 
-[Mimimizer](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.Minimizer)
+[Minimizer](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.Minimizer)
 object and a 
 [MinimizerResult](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.MinimizerResult)
 object as input.
-
-When using the [Model](https://lmfit.github.io/lmfit-py/model.html) wrapper of LMFIT 
-to perform the parameter estimation and model fit, the instantiated 
-[ModelResult](https://lmfit.github.io/lmfit-py/model.html#lmfit.model.ModelResult)
-object should be passed twice to the `conf_interval()` method, instead of the
-[Mimimizer](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.Minimizer)
-and 
-[MinimizerResult](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.MinimizerResult)
-(see above).
 
 A typical workflow would entail:
 ```python
@@ -53,13 +44,27 @@ A typical workflow would entail:
 >>> c[1].plot_all_ci()  # plot confidence intervals for all parameters
 ```
 
-When using the [Model](https://lmfit.github.io/lmfit-py/model.html) class, the 
-function call would be:
+When using the [Model](https://lmfit.github.io/lmfit-py/model.html) wrapper of LMFIT 
+to perform the parameter estimation and model fit, the instantiated 
+[ModelResult](https://lmfit.github.io/lmfit-py/model.html#lmfit.model.ModelResult)
+object should be passed twice to the `conf_interval()` method, instead of the
+[Minimizer](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.Minimizer)
+and 
+[MinimizerResult](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.MinimizerResult)
+(see above). In this case the function call would be:
 ```python
 >>> c = conf_interval(
         modelresult, modelresult, prob=0.95, limits=0.5, 
         log=False, points=11, return_CIclass=True
     )
+```
+
+Once a profile likelihood has been calculated, the same data can be used to calculate 
+the confidence interval for a different probability, thus avoiding the 
+computationally intensive re-calculation of the profile likelihood:
+
+```python
+>>> c[1].calc_all_ci(prob=0.8)
 ```
 
 ### Docstring of the `conf_interval` method
