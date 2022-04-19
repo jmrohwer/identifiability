@@ -25,7 +25,7 @@ CONF_ERR_NVARS = '%s with < 2 variables' % CONF_ERR_GEN
 class ConfidenceInterval:
     """Class used to calculate the confidence interval."""
 
-    def __init__(self, minimizer, result, p_names=None, prob=None, log=False):
+    def __init__(self, minimizer, result, p_names=None, log=False):
         assert isinstance(minimizer, Minimizer) or isinstance(
             minimizer, ModelResult
         ), 'minimizer must be instance of `lmfit.minimizer.Minimizer` or `lmfit.model.ModelResult`'
@@ -49,13 +49,8 @@ class ConfidenceInterval:
         self.p_names = p_names
         self.fit_params = [self.params[p] for p in self.p_names]
 
-        if not prob:
-            prob = 0.95
-        assert (
-            (type(prob) == float) & (prob > 0) & (prob < 1)
-        ), 'Please provide a probability value between 0 and 1.'
-        self.prob = prob
         self.log = log
+        self._traces_calculated = False
 
         # check that there are at least 2 true variables!
         # check that all stderrs are sensible (including not None or NaN)
@@ -69,11 +64,26 @@ class ConfidenceInterval:
 
         self.trace_dict = {i: {} for i in self.p_names}
 
-    def calc_all_ci(self, limits=0.5, points=11, method='leastsq', mp=True):
+    def calc_all_ci(self, limits=0.5, points=11, prob=0.95, method='leastsq', mp=True):
         """Calculate all confidence intervals."""
+        assert (
+            (type(prob) == float) & (prob > 0) & (prob < 1)
+        ), 'Please provide a probability value between 0 and 1.'
+        self.prob = prob
         self.method = method
         self.ci_values = OrderedDict()
+        self.threshold = self._calc_threshold()
 
+        if not self._traces_calculated:
+            self._populate_traces(limits, points, mp)
+
+        for p in self.p_names:
+            self.ci_values[p] = self._process_ci(p)
+
+        return self.ci_values
+
+
+    def _populate_traces(self, limits, points, mp):
         if mp:
             proc_pool = Pool()
             arl = []
@@ -92,10 +102,8 @@ class ConfidenceInterval:
                 para_vals = np.linspace(limits * para.value, (2 - limits) * para.value, points)
 
             para.vary = False
-            threshold = self.calc_threshold()
             self.trace_dict[para.name]['value'] = []
             self.trace_dict[para.name]['dchi'] = []
-            self.trace_dict[para.name]['threshold'] = threshold
 
             for val in para_vals:
                 self.trace_dict[para.name]['value'].append(val)
@@ -105,7 +113,7 @@ class ConfidenceInterval:
                     results.append(self.calc_dchi(para, val))
 
             para.vary = True
-            self.reset_vals()
+            self._reset_vals()
 
         if mp:
             arl[-1].wait()
@@ -115,16 +123,13 @@ class ConfidenceInterval:
 
         for (para, dchi) in results:
             self.trace_dict[para.name]['dchi'].append(dchi)
+        self._traces_calculated = True
 
-        for p in self.p_names:
-            self.ci_values[p] = self.process_ci(p)
 
-        return self.ci_values
-
-    def process_ci(self, p_name):
+    def _process_ci(self, p_name):
         xx = self.trace_dict[p_name]['value']
         yy = self.trace_dict[p_name]['dchi']
-        t = self.trace_dict[p_name]['threshold']
+        t = self.threshold
         spl = sp.interpolate.UnivariateSpline(xx, yy, k=2, s=0)
         if self.log:
             allx = np.logspace(np.log10(xx[0]), np.log10(xx[-1]), 20000)
@@ -141,7 +146,7 @@ class ConfidenceInterval:
             hi = np.nan
         return lo, hi
 
-    def reset_vals(self):
+    def _reset_vals(self):
         """Reset parameter values to best-fit values."""
         for para_key in self.params:
             (self.params[para_key].value, self.params[para_key].stderr,) = self.org[
@@ -160,7 +165,7 @@ class ConfidenceInterval:
         ci_instance.params[para.name] = para
         ci_instance.minimizer.prepare_fit(ci_instance.params)
         out = ci_instance.minimizer.minimize(method=ci_instance.method)
-        dchi = ci_instance.dchi(ci_instance.result, out)
+        dchi = ci_instance._dchi(ci_instance.result, out)
         ci_instance.params[para.name] = save_para
         para.vary = True
         return para, dchi
@@ -171,17 +176,17 @@ class ConfidenceInterval:
         a given parameter value.
         """
         if restore:
-            self.reset_vals()
+            self._reset_vals()
         para.value = val
         save_para = self.params[para.name]
         self.params[para.name] = para
         self.minimizer.prepare_fit(self.params)
         out = self.minimizer.minimize(method=self.method)
-        dchi = self.dchi(self.result, out)
+        dchi = self._dchi(self.result, out)
         self.params[para.name] = save_para
         return para, dchi
 
-    def dchi(self, best_fit, new_fit):
+    def _dchi(self, best_fit, new_fit):
         """
         Return the normalised delta chi-squared between the best fit
         and the new fit.
@@ -189,7 +194,7 @@ class ConfidenceInterval:
         dchi = new_fit.chisqr / best_fit.chisqr - 1.0
         return dchi
 
-    def calc_threshold(self):
+    def _calc_threshold(self):
         """
         Return the threshold of the normalised chi-squared for 
         the given probability.
@@ -206,7 +211,7 @@ class ConfidenceInterval:
             f, ax = plt.subplots()
         xx = self.trace_dict[para]['value']
         yy = self.trace_dict[para]['dchi']
-        t = self.trace_dict[para]['threshold']
+        t = self.threshold
         spl = sp.interpolate.UnivariateSpline(xx, yy, k=2, s=0)
         allx = np.linspace(xx[0], xx[-1], 20000)
         ax.plot(xx, yy, '+')
@@ -229,15 +234,15 @@ class ConfidenceInterval:
         num = len(self.p_names)
         numcols = 3
         numrows = num // numcols + 1
-        f, ax = plt.subplots(nrows=numrows, ncols=numcols, figsize=(9, 2.5*numrows))
+        f, ax = plt.subplots(nrows=numrows, ncols=numcols, figsize=(9, 2.5 * numrows))
         for i in range(num):
             if num <= numcols:
                 theax = ax[i]
             else:
-                theax = ax[i//numcols, i%numcols]
+                theax = ax[i // numcols, i % numcols]
             self.plot_ci(self.p_names[i], ax=theax)
         # remove empty axes
-        empty = numcols - num%numcols
+        empty = numcols - num % numcols
         if empty != 0:
             for i in range(-empty, 0):
                 if num <= numcols:
@@ -307,8 +312,8 @@ def conf_interval(
         Instantiated ``ConfidenceInterval`` class to access the attached methods.
     """
     assert (limits > 0) & (limits < 1), 'Please select a limits value between 0 and 1.'
-    ci = ConfidenceInterval(minimizer, result, p_names, prob, log)
-    output = ci.calc_all_ci(limits, points, method=method, mp=mp)
+    ci = ConfidenceInterval(minimizer, result, p_names, log)
+    output = ci.calc_all_ci(limits, points, prob, method=method, mp=mp)
     if return_CIclass:
         return output, ci
     return output
