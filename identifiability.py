@@ -12,10 +12,11 @@ from lmfit.minimizer import Minimizer, MinimizerResult, MinimizerException
 from lmfit.model import ModelResult
 import numpy as np
 import scipy as sp
+import math
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 
 CONF_ERR_GEN = 'Cannot determine Confidence Intervals'
 CONF_ERR_STDERR = '%s without sensible uncertainty estimates' % CONF_ERR_GEN
@@ -233,7 +234,7 @@ class ConfidenceInterval:
     def plot_all_ci(self):
         num = len(self.p_names)
         numcols = 3
-        numrows = num // numcols + 1
+        numrows = math.ceil(num / numcols)
         f, ax = plt.subplots(nrows=numrows, ncols=numcols, figsize=(9, 2.5 * numrows))
         for i in range(num):
             if num <= numcols:
@@ -242,8 +243,8 @@ class ConfidenceInterval:
                 theax = ax[i // numcols, i % numcols]
             self.plot_ci(self.p_names[i], ax=theax)
         # remove empty axes
-        empty = numcols - num % numcols
-        if empty != 0:
+        if num % numcols != 0:
+            empty = numcols - num % numcols
             for i in range(-empty, 0):
                 if num <= numcols:
                     ax[i].set_visible(False)
