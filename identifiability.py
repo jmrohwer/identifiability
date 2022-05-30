@@ -105,7 +105,7 @@ class ConfidenceInterval:
             para.vary = False
             self.trace_dict[para.name]['value'] = []
             self.trace_dict[para.name]['dchi'] = []
-            self.trace_dict[para.name]['params'] = []
+            self.trace_dict[para.name]['results'] = []
 
             for val in para_vals:
                 self.trace_dict[para.name]['value'].append(val)
@@ -123,9 +123,9 @@ class ConfidenceInterval:
                 results.append(ar.get())
             proc_pool.close()
 
-        for (para, dchi, params) in results:
+        for (para, dchi, opt_res) in results:
             self.trace_dict[para.name]['dchi'].append(dchi)
-            self.trace_dict[para.name]['params'].append(params)
+            self.trace_dict[para.name]['results'].append(opt_res)
         self._traces_calculated = True
 
 
@@ -133,7 +133,7 @@ class ConfidenceInterval:
         xx = self.trace_dict[p_name]['value']
         yy = self.trace_dict[p_name]['dchi']
         t = self.threshold
-        spl = sp.interpolate.UnivariateSpline(xx, yy, k=2, s=0)
+        spl = sp.interpolate.UnivariateSpline(xx, yy, k=3, s=0)
         if self.log:
             allx = np.logspace(np.log10(xx[0]), np.log10(xx[-1]), 20000)
         else:
@@ -171,7 +171,7 @@ class ConfidenceInterval:
         dchi = ci_instance._dchi(ci_instance.result, out)
         ci_instance.params[para.name] = save_para
         para.vary = True
-        return para, dchi, out.params
+        return para, dchi, out
 
     def calc_dchi(self, para, val, restore=False):
         """
@@ -187,7 +187,7 @@ class ConfidenceInterval:
         out = self.minimizer.minimize(method=self.method)
         dchi = self._dchi(self.result, out)
         self.params[para.name] = save_para
-        return para, dchi, out.params
+        return para, dchi, out
 
     def _dchi(self, best_fit, new_fit):
         """
@@ -215,7 +215,7 @@ class ConfidenceInterval:
         xx = self.trace_dict[para]['value']
         yy = self.trace_dict[para]['dchi']
         t = self.threshold
-        spl = sp.interpolate.UnivariateSpline(xx, yy, k=2, s=0)
+        spl = sp.interpolate.UnivariateSpline(xx, yy, k=3, s=0)
         allx = np.linspace(xx[0], xx[-1], 20000)
         ax.plot(xx, yy, '+')
         ax.plot(allx, spl(allx), '-', lw=1)
