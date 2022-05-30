@@ -133,7 +133,7 @@ class ConfidenceInterval:
         xx = self.trace_dict[p_name]['value']
         yy = self.trace_dict[p_name]['dchi']
         t = self.threshold
-        spl = sp.interpolate.UnivariateSpline(xx, yy, k=3, s=0)
+        spl = sp.interpolate.UnivariateSpline(xx, yy, k=2, s=0)
         if self.log:
             allx = np.logspace(np.log10(xx[0]), np.log10(xx[-1]), 20000)
         else:
@@ -215,7 +215,7 @@ class ConfidenceInterval:
         xx = self.trace_dict[para]['value']
         yy = self.trace_dict[para]['dchi']
         t = self.threshold
-        spl = sp.interpolate.UnivariateSpline(xx, yy, k=3, s=0)
+        spl = sp.interpolate.UnivariateSpline(xx, yy, k=2, s=0)
         allx = np.linspace(xx[0], xx[-1], 20000)
         ax.plot(xx, yy, '+')
         ax.plot(allx, spl(allx), '-', lw=1)
