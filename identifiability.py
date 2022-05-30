@@ -105,6 +105,7 @@ class ConfidenceInterval:
             para.vary = False
             self.trace_dict[para.name]['value'] = []
             self.trace_dict[para.name]['dchi'] = []
+            self.trace_dict[para.name]['params'] = []
 
             for val in para_vals:
                 self.trace_dict[para.name]['value'].append(val)
@@ -122,8 +123,9 @@ class ConfidenceInterval:
                 results.append(ar.get())
             proc_pool.close()
 
-        for (para, dchi) in results:
+        for (para, dchi, params) in results:
             self.trace_dict[para.name]['dchi'].append(dchi)
+            self.trace_dict[para.name]['params'].append(params)
         self._traces_calculated = True
 
 
@@ -169,7 +171,7 @@ class ConfidenceInterval:
         dchi = ci_instance._dchi(ci_instance.result, out)
         ci_instance.params[para.name] = save_para
         para.vary = True
-        return para, dchi
+        return para, dchi, out.params
 
     def calc_dchi(self, para, val, restore=False):
         """
@@ -185,7 +187,7 @@ class ConfidenceInterval:
         out = self.minimizer.minimize(method=self.method)
         dchi = self._dchi(self.result, out)
         self.params[para.name] = save_para
-        return para, dchi
+        return para, dchi, out.params
 
     def _dchi(self, best_fit, new_fit):
         """
