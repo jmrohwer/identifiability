@@ -16,7 +16,7 @@ import math
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
 
-__version__ = '0.3.2'
+__version__ = '0.3.3dev'
 
 CONF_ERR_STDERR = '%s without sensible uncertainty estimates' % CONF_ERR_GEN
 CONF_ERR_NVARS = '%s with < 2 variables' % CONF_ERR_GEN
