@@ -4,7 +4,7 @@
 
 from setuptools import setup
 
-__version__ = '0.3.2'
+__version__ = '0.3.3dev'
 
 # The directory containing this file
 README_name = __file__.replace('setup.py', 'README.md')
