@@ -18,7 +18,6 @@ from multiprocessing import Pool
 
 __version__ = '0.3.2'
 
-CONF_ERR_GEN = 'Cannot determine Confidence Intervals'
 CONF_ERR_STDERR = '%s without sensible uncertainty estimates' % CONF_ERR_GEN
 CONF_ERR_NVARS = '%s with < 2 variables' % CONF_ERR_GEN
 
@@ -52,6 +51,7 @@ class ConfidenceInterval:
 
         self.log = log
         self._traces_calculated = False
+        self._k = 2   # degree of smoothing spline
 
         # check that there are at least 2 true variables!
         # check that all stderrs are sensible (including not None or NaN)
@@ -129,11 +129,11 @@ class ConfidenceInterval:
         self._traces_calculated = True
 
 
-    def _process_ci(self, p_name):
+    def _process_ci(self, p_name, k=self._k):
         xx = self.trace_dict[p_name]['value']
         yy = self.trace_dict[p_name]['dchi']
         t = self.threshold
-        spl = sp.interpolate.UnivariateSpline(xx, yy, k=2, s=0)
+        spl = sp.interpolate.UnivariateSpline(xx, yy, k=k, s=0)
         if self.log:
             allx = np.logspace(np.log10(xx[0]), np.log10(xx[-1]), 20000)
         else:
@@ -215,7 +215,7 @@ class ConfidenceInterval:
         xx = self.trace_dict[para]['value']
         yy = self.trace_dict[para]['dchi']
         t = self.threshold
-        spl = sp.interpolate.UnivariateSpline(xx, yy, k=2, s=0)
+        spl = sp.interpolate.UnivariateSpline(xx, yy, k=self._k, s=0)
         allx = np.linspace(xx[0], xx[-1], 20000)
         ax.plot(xx, yy, '+')
         ax.plot(allx, spl(allx), '-', lw=1)
