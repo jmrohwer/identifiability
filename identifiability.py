@@ -129,11 +129,11 @@ class ConfidenceInterval:
         self._traces_calculated = True
 
 
-    def _process_ci(self, p_name, k=self._k):
+    def _process_ci(self, p_name):
         xx = self.trace_dict[p_name]['value']
         yy = self.trace_dict[p_name]['dchi']
         t = self.threshold
-        spl = sp.interpolate.UnivariateSpline(xx, yy, k=k, s=0)
+        spl = sp.interpolate.UnivariateSpline(xx, yy, k=self._k, s=0)
         if self.log:
             allx = np.logspace(np.log10(xx[0]), np.log10(xx[-1]), 20000)
         else:
