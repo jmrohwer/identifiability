@@ -16,10 +16,9 @@ import math
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
 
-__version__ = '0.3.3dev'
+__version__ = '0.3.3dev1'
 
 CONF_ERR_GEN = 'Cannot determine Confidence Intervals'
-CONF_ERR_STDERR = '%s without sensible uncertainty estimates' % CONF_ERR_GEN
 CONF_ERR_NVARS = '%s with < 2 variables' % CONF_ERR_GEN
 
 class ConfidenceInterval:
@@ -54,11 +53,6 @@ class ConfidenceInterval:
         self._k = 2   # degree of smoothing spline
 
         # check that there are at least 2 true variables!
-        # check that all stderrs are sensible (including not None or NaN)
-
-        for par in self.fit_params:
-            if par.vary and (par.stderr is None or par.stderr is np.nan):
-                raise MinimizerException(CONF_ERR_STDERR)
         nvars = len([p for p in self.params.values() if p.vary])
         if nvars < 2:
             raise MinimizerException(CONF_ERR_NVARS)
