@@ -19,13 +19,20 @@ The latest stable release is available on PyPI:
 ```bash
 $ pip install identifiability
 ```
+The module can be used in combination with [PySCeS](https://pysces.github.io) for 
+simulation and parameter estimation of kinetic models using the `CVODE` solver. When 
+performing identifiability analysis in parallel using `multiprocessing`, additional 
+dependences are required; these can be installed with:
+```bash
+$ pip install "identifiability[pyscesmp]"
+```
 
 ## Basic usage
 
 For background, the reader is referred to the section on *Calculation of confidence 
 intervals* in the [LMFIT documentation](https://lmfit.github.io/lmfit-py/confidence.html).
 
-To start the indentifiability analysis, the user first needs to have performed a 
+To start the identifiability analysis, the user first needs to have performed a 
 parameter estimation with LMFIT. The method for estimating confidence intervals 
 takes an instantiated LMFIT 
 [Minimizer](https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.Minimizer)
