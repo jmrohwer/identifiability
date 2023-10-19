@@ -16,9 +16,12 @@ import math
 from matplotlib import pyplot as plt
 try:
     from multiprocessing_on_dill import Pool
-    print("module 'multiprocessing_on_dill' is installed")
 except ModuleNotFoundError:
-    print("module 'multiprocessing_on_dill' is not installed")
+    print(
+        """Info: module 'multiprocessing_on_dill' is not installed.
+Parameter estimation of kinetic models with PySCeS using the CVODE solver won't work!
+"""
+    )
     from multiprocessing import Pool
 
 __version__ = '0.4'
