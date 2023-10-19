@@ -139,4 +139,4 @@ def conf_interval(
     """
 ```
 
-© Johann M. Rohwer, 2022
+© Johann M. Rohwer, 2023

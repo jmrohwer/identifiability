@@ -21,7 +21,7 @@ except ModuleNotFoundError:
     print("module 'multiprocessing_on_dill' is not installed")
     from multiprocessing import Pool
 
-__version__ = '0.3.3dev2'
+__version__ = '0.4'
 
 CONF_ERR_GEN = 'Cannot determine Confidence Intervals'
 CONF_ERR_NVARS = '%s with < 2 variables' % CONF_ERR_GEN

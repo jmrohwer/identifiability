@@ -4,7 +4,7 @@
 
 from setuptools import setup
 
-__version__ = '0.3.3dev2'
+__version__ = '0.4'
 
 # The directory containing this file
 README_name = __file__.replace('setup.py', 'README.md')
@@ -28,10 +28,10 @@ setup(  # Distribution meta-data
     author='Johann M. Rohwer',
     author_email='j.m.rohwer@gmail.com',
     url='https://github.com/jmrohwer/identifiability/',
-    download_url='https://github.com/jmrohwer/identifiability/archive/refs/tags/v0.3.2.zip',
+    download_url='https://github.com/jmrohwer/identifiability/archive/refs/tags/v0.4.zip',
     license='New BSD',
     py_modules=modules,
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     install_requires=requirements,
     extras_require={
         'pyscesmp': ['pysces', 'multiprocessing_on_dill'],
@@ -45,11 +45,10 @@ setup(  # Distribution meta-data
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
 )
