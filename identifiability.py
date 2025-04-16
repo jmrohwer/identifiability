@@ -29,6 +29,14 @@ __version__ = '0.4'
 CONF_ERR_GEN = 'Cannot determine Confidence Intervals'
 CONF_ERR_NVARS = '%s with < 2 variables' % CONF_ERR_GEN
 
+def copy_vals(params):
+    """Save values/stderrs of parameters in a temporary dictionary."""
+    tmp_params = {}
+    for para_key in params:
+        tmp_params[para_key] = (params[para_key].value,
+                                params[para_key].stderr)
+    return tmp_params
+
 class ConfidenceInterval:
     """Class used to calculate the confidence interval."""
 
@@ -42,13 +50,7 @@ class ConfidenceInterval:
         self.minimizer = minimizer
         self.result = result
         self.params = result.params.copy()
-        self.org = {}
-        for para_key in self.params:
-            self.org[para_key] = (
-                self.params[para_key].value,
-                self.params[para_key].stderr,
-            )
-
+        self.org = copy_vals(self.params)
         self.best_chi = result.chisqr
 
         if not p_names:
