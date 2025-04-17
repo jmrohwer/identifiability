@@ -1,5 +1,3 @@
-from identifiability import ConfidenceInterval
-
 # identifiability - Parameter identifiability analysis in Python
 
 This module performs parameter identifiability
