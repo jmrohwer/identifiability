@@ -24,7 +24,7 @@ Parameter estimation of kinetic models with PySCeS using the CVODE solver won't 
     )
     from multiprocessing import Pool
 
-__version__ = '0.5.0'
+from .version import __version__
 
 CONF_ERR_GEN = 'Cannot determine Confidence Intervals'
 CONF_ERR_NVARS = '%s with < 2 variables' % CONF_ERR_GEN
