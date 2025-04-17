@@ -1,6 +1,6 @@
 line-length = 90
 
-[flake8-quotes]
+[lint.flake8-quotes]
 docstring-quotes = "double"
 inline-quotes = "single"
 
