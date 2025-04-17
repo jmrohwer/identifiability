@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=42", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "identifiability"
+dynamic = ["version"]
+description = "Parameter identifiability analysis in Python"
+readme = "README.md"
+license = "BSD-3-Clause"
+dependencies = ["numpy", "scipy", "matplotlib", "lmfit"]
+authors = [
+    { name = "Johann M. Rohwer", email = "j.m.rohwer@gmail.com" }
+]
+requires-python = ">=3.9"
+keywords = ["identifiability", "parameter analysis", "bioinformatics"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Bio-Informatics"
+]
+
+[project.urls]
+Homepage = "https://github.com/jmrohwer/identifiability/"
+Download = "https://github.com/jmrohwer/identifiability/archive/refs/tags/v0.5.0.zip"
+
+[project.optional-dependencies]
+pyscesmp = ["pysces", "multiprocessing_on_dill"]
+
+[tool.setuptools]
+py-modules = ["identifiability"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.dynamic]
+version = { attr = "identifiability.version.__version__" }
