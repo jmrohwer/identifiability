@@ -8,7 +8,7 @@ for plotting the profile likelihood.
 """
 
 from collections import OrderedDict
-from lmfit.minimizer import Minimizer, MinimizerResult, MinimizerException
+from lmfit.minimizer import MinimizerException, Minimizer, MinimizerResult
 from lmfit.model import ModelResult
 import numpy as np
 import scipy as sp
@@ -29,7 +29,7 @@ __version__ = '0.4'
 CONF_ERR_GEN = 'Cannot determine Confidence Intervals'
 CONF_ERR_NVARS = '%s with < 2 variables' % CONF_ERR_GEN
 
-def copy_vals(params):
+def _copy_vals(params):
     """Save values/stderrs of parameters in a temporary dictionary."""
     tmp_params = {}
     for para_key in params:
@@ -40,17 +40,36 @@ def copy_vals(params):
 class ConfidenceInterval:
     """Class used to calculate the confidence interval."""
 
-    def __init__(self, minimizer, result, p_names=None, log=False):
-        assert isinstance(minimizer, Minimizer) or isinstance(
-            minimizer, ModelResult
-        ), 'minimizer must be instance of `lmfit.minimizer.Minimizer` or `lmfit.model.ModelResult`'
-        assert isinstance(result, MinimizerResult) or isinstance(
-            result, ModelResult
-        ), 'result must be instance of `lmfit.minimizer.MinimizerResult` or `lmfit.model.ModelResult`'
+    def __init__(self, minimizer, result, p_names=None):
+        """Initialize the ConfidenceInterval class.
+
+        Parameters
+        ----------
+        minimizer : Minimizer
+            The minimizer to use, holding objective function.
+        result : MinimizerResult
+            The result of running minimize().
+        p_names : list, optional
+            Names of the parameters for which the CI is calculated. If None
+            (default), the CI is calculated for every parameter.
+
+        Raises
+        ------
+        MinimizerException
+            If there are less than two variables.
+        """
+
+        assert isinstance(minimizer, Minimizer) or isinstance(minimizer, ModelResult), (
+            'minimizer must be instance of `lmfit.minimizer.Minimizer` or `lmfit.model.ModelResult`'
+        )
+        assert isinstance(result, MinimizerResult) or isinstance(result, ModelResult), (
+            'result must be instance of `lmfit.minimizer.MinimizerResult` or `lmfit.model.ModelResult`'
+        )
+
         self.minimizer = minimizer
         self.result = result
         self.params = result.params.copy()
-        self.org = copy_vals(self.params)
+        self.org = _copy_vals(self.params)
         self.best_chi = result.chisqr
 
         if not p_names:
@@ -58,7 +77,6 @@ class ConfidenceInterval:
         self.p_names = p_names
         self.fit_params = [self.params[p] for p in self.p_names]
 
-        self.log = log
         self._traces_calculated = False
         self._k = 2   # degree of smoothing spline
 
@@ -69,24 +87,68 @@ class ConfidenceInterval:
 
         self.trace_dict = {i: {} for i in self.p_names}
 
-    def calc_all_ci(self, limits=0.5, points=11, prob=0.95, method='leastsq', mp=True):
-        """Calculate all confidence intervals."""
+    def calc_all_ci(
+        self,
+        limits=0.5,
+        points=11,
+        prob=0.95,
+        method='leastsq',
+        log=False,
+        recalc=False,
+        mp=True,
+    ):
+        """Calculate all confidence intervals.
+
+        Parameters
+        ----------
+        limits : float, optional
+            The limits (as a fraction of the original parameter value) within which
+            to vary the parameters for identifiability analysis (default is 0.5).
+            If ``log=False``, the parameter is varied from p*limits to p*(2 - limits),
+            where p is the original value.
+            If ``log=True``, the parameter is varied from p*limits to p/limits.
+        points : int, optional
+            The number of points for which to calculate the profile likelihood over
+            the given parameter range.
+        prob : float, optional
+            The probability for the confidence interval (<1). If None,
+            the default is 0.95 (95 % confidence interval).
+        method : str, optional
+            The lmfit mimimize() method to use (default='leastsq')
+        log : bool, optional
+            Whether to vary the parameter in a log (True) or a linear (False,
+            default) scale.
+        recalc : bool, optional
+            Whether to recalculate the traces and splines (default=False). If False,
+            the existing traces are used (useful for calculating the CIs for a different
+            probability). If True, the traces are recalculated. This is useful
+            if the `limits`, `points`, `method` or `log`  parameters are changed.
+        mp : bool, optional
+            Run the optimization in parallel using ``multiprocessing`` (default=True)
+
+        Returns
+        -------
+        output : dict
+            A dictionary containing a list of ``(lower, upper)``-tuples containing
+            the confidence bounds for each parameter.
+        """
+
         assert (
             (type(prob) == float) & (prob > 0) & (prob < 1)
         ), 'Please provide a probability value between 0 and 1.'
         self.prob = prob
         self.method = method
+        self.log = log
         self.ci_values = OrderedDict()
         self.threshold = self._calc_threshold()
 
-        if not self._traces_calculated:
+        if not self._traces_calculated or recalc:
             self._populate_traces(limits, points, mp)
 
         for p in self.p_names:
             self.ci_values[p] = self._process_ci(p)
 
         return self.ci_values
-
 
     def _populate_traces(self, limits, points, mp):
         if mp:
@@ -125,7 +187,8 @@ class ConfidenceInterval:
             arl[-1].wait()
             for ar in arl:
                 results.append(ar.get())
-            proc_pool.close()
+            proc_pool.terminate()
+            del proc_pool
 
         for (para, dchi, opt_res) in results:
             self.trace_dict[para.name]['dchi'].append(dchi)
@@ -213,6 +276,17 @@ class ConfidenceInterval:
         return threshold
 
     def plot_ci(self, para, ax=None):
+        """Plot profile likelihood with confidence interval for single parameter.
+
+        Parameters
+        ----------
+        para : str
+            The parameter name for which to plot the profile likelihood.
+        ax: matplotlib.axes.Axes, optional
+            Matplotlib Axes object to plot on. If None, a new figure and axes will be created.
+
+        """
+
         assert para in self.p_names, 'para must be one of ' + str(self.p_names)
         if not ax:
             f, ax = plt.subplots()
@@ -238,6 +312,8 @@ class ConfidenceInterval:
         ax.set_title(para)
 
     def plot_all_ci(self):
+        """Plot profile likelihoods with confidence intervals for all parameters."""
+
         num = len(self.p_names)
         numcols = 3
         numrows = math.ceil(num / numcols)
@@ -258,69 +334,3 @@ class ConfidenceInterval:
                     ax[num // numcols, i].set_visible(False)
         f.tight_layout()
 
-def conf_interval(
-    minimizer,
-    result,
-    p_names=None,
-    prob=0.95,
-    limits=0.5,
-    log=False,
-    points=11,
-    method='leastsq',
-    return_CIclass=False,
-    mp=True,
-):
-    """
-    Calculate the confidence interval (CI) for parameters.
-
-    The parameter for which the CI is calculated will be varied, while the
-    remaining parameters are re-optimized to minimize the chi-square. The
-    resulting chi-square is used to calculate the probability with a given
-    statistic, i.e. chi-squared test.
-
-    Parameters
-    ----------
-    minimizer : Minimizer or ModelResult
-        The minimizer to use, holding objective function.
-    result : MinimizerResult or ModelResult
-        The result of running Minimizer.minimize() or Model.fit().
-    p_names : list, optional
-        Names of the parameters for which the CI is calculated. If None
-        (default), the CI is calculated for every parameter.
-    prob : float, optional
-        The probability for the confidence interval (<1). If None,
-        the default is 0.95 (95 % confidence interval).
-    limits : float, optional
-        The limits (as a fraction of the original parameter value) within which
-        to vary the parameters for identifiability analysis (default is 0.5).
-        If ``log=False``, the parameter is varied from p*limits to p*(2 - limits),
-        where p is the original value.
-        If ``log=True``, the parameter is varied from p*limits to p/limits.
-    log : bool, optional
-        Whether to vary the parameter in a log (True) or a linear (False,
-        default) scale.
-    points : int, optional
-        The number of points for which to calculate the profile likelihood over
-        the given parameter range.
-    method : str, optional
-        The lmfit mimimize() method to use (default='leastsq')
-    return_CIclass : bool, optional
-        When true, return the instantiated ``ConfidenceInterval`` class to
-        access its methods directly (default=False).
-    mp : bool, optional
-        Run the optimization in parallel using ``multiprocessing`` (default=True)
-
-    Returns
-    -------
-    output : dict
-        A dictionary containing a list of ``(lower, upper)``-tuples containing
-        the confidence bounds for each parameter.
-    ci : ``ConfidenceInterval`` instance, optional
-        Instantiated ``ConfidenceInterval`` class to access the attached methods.
-    """
-    assert (limits > 0) & (limits < 1), 'Please select a limits value between 0 and 1.'
-    ci = ConfidenceInterval(minimizer, result, p_names, log)
-    output = ci.calc_all_ci(limits, points, prob, method=method, mp=mp)
-    if return_CIclass:
-        return output, ci
-    return output
