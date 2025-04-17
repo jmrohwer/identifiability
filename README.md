@@ -32,7 +32,7 @@ $ pip install "identifiability[pyscesmp]"
 ## API change
 
 > **NOTE:**  
->The API of the `identifiability` module has changed since version 0.5. The `conf_interval()` 
+>The API of the `identifiability` module has changed since version 0.5.0. The `conf_interval()` 
 helper function has been removed due to incompatibilities with Python 3.13. The `ConfidenceInterval`
 class now has to be instantiated directly.
 
