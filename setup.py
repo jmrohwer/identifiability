@@ -3,8 +3,7 @@
 """Setup script for the identifiability module distribution."""
 
 from setuptools import setup
-
-__version__ = '0.4'
+from identifiability import __version__
 
 # The directory containing this file
 README_name = __file__.replace('setup.py', 'README.md')
@@ -31,7 +30,7 @@ setup(  # Distribution meta-data
     download_url='https://github.com/jmrohwer/identifiability/archive/refs/tags/v0.4.zip',
     license='New BSD',
     py_modules=modules,
-    python_requires='>=3.8',
+    python_requires='>=3.9',
     install_requires=requirements,
     extras_require={
         'pyscesmp': ['pysces', 'multiprocessing_on_dill'],
