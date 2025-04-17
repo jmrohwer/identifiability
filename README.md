@@ -155,6 +155,21 @@ class ConfidenceInterval:
             the confidence bounds for each parameter.
         """
 
+    def plot_all_ci(self):
+        """Plot profile likelihoods with confidence intervals for all parameters."""
+        
+    def plot_ci(self, para, ax=None):
+        """Plot profile likelihood with confidence interval for single parameter.
+
+        Parameters
+        ----------
+        para : str
+            The parameter name for which to plot the profile likelihood.
+        ax: matplotlib.axes.Axes, optional
+            Matplotlib Axes object to plot on. If None, a new figure and axes will be created.
+        """
+
+
 ```
 
 
