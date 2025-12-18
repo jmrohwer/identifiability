@@ -317,13 +317,14 @@ class ConfidenceInterval:
         num = len(self.p_names)
         numcols = 3
         numrows = math.ceil(num / numcols)
-        f, ax = plt.subplots(nrows=numrows, ncols=numcols, figsize=(9, 2.5 * numrows))
+        f, ax = plt.subplots(nrows=numrows, ncols=numcols, figsize=(9, 3 * numrows))
         for i in range(num):
             if num <= numcols:
                 theax = ax[i]
             else:
                 theax = ax[i // numcols, i % numcols]
             self.plot_ci(self.p_names[i], ax=theax)
+        f.tight_layout()
         # remove empty axes
         if num % numcols != 0:
             empty = numcols - num % numcols
@@ -332,5 +333,3 @@ class ConfidenceInterval:
                     ax[i].set_visible(False)
                 else:
                     ax[num // numcols, i].set_visible(False)
-        f.tight_layout()
-
