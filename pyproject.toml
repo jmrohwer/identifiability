@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42"]
+requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -12,7 +12,7 @@ dependencies = ["numpy", "scipy", "matplotlib", "lmfit"]
 authors = [
     { name = "Johann M. Rohwer", email = "j.m.rohwer@gmail.com" }
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 keywords = ["identifiability", "parameter analysis", "bioinformatics"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -21,11 +21,10 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Bio-Informatics"
 ]
 
