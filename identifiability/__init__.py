@@ -14,20 +14,31 @@ import numpy as np
 import scipy as sp
 import math
 from matplotlib import pyplot as plt
-try:
-    from multiprocessing_on_dill import Pool
-except ModuleNotFoundError:
-    print(
-        """Info: module 'multiprocessing_on_dill' is not installed.
-Parameter estimation of kinetic models with PySCeS using the CVODE solver won't work!
-"""
-    )
-    from multiprocessing import Pool
+from multiprocess import Pool
 
 from .version import __version__
 
 CONF_ERR_GEN = 'Cannot determine Confidence Intervals'
 CONF_ERR_NVARS = '%s with < 2 variables' % CONF_ERR_GEN
+
+def _calc_dchi_worker(minimizer, params, result, method, para, val):
+    """
+    Module-level worker function for multiprocessing to avoid pickling issues.
+    Calculates the normalised delta chi-squared for a given parameter value.
+    """
+    para.vary = False
+    para.value = val
+    save_para = params[para.name]
+    params[para.name] = para
+    minimizer.prepare_fit(params)
+    out = minimizer.minimize(method=method)
+    
+    # Calculate dchi
+    dchi = out.chisqr / result.chisqr - 1.0
+    
+    params[para.name] = save_para
+    para.vary = True
+    return para, dchi, out
 
 def _copy_vals(params):
     """Save values/stderrs of parameters in a temporary dictionary."""
@@ -176,7 +187,7 @@ class ConfidenceInterval:
             for val in para_vals:
                 self.trace_dict[para.name]['value'].append(val)
                 if mp:
-                    arl.append(proc_pool.apply_async(self._calc_dchi, args=(self, para, val)))
+                    arl.append(proc_pool.apply_async(_calc_dchi_worker, args=(self.minimizer, self.params, self.result, self.method, para, val)))
                 else:
                     results.append(self.calc_dchi(para, val))
 
@@ -222,23 +233,6 @@ class ConfidenceInterval:
             (self.params[para_key].value, self.params[para_key].stderr,) = self.org[
                 para_key
             ]
-
-    @staticmethod
-    def _calc_dchi(ci_instance, para, val):
-        """
-        Static method to calculate the normalised delta chi-squared
-        using multiprocessing.
-        """
-        para.vary = False
-        para.value = val
-        save_para = ci_instance.params[para.name]
-        ci_instance.params[para.name] = para
-        ci_instance.minimizer.prepare_fit(ci_instance.params)
-        out = ci_instance.minimizer.minimize(method=ci_instance.method)
-        dchi = ci_instance._dchi(ci_instance.result, out)
-        ci_instance.params[para.name] = save_para
-        para.vary = True
-        return para, dchi, out
 
     def calc_dchi(self, para, val, restore=False):
         """
