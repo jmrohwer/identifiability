@@ -5,7 +5,7 @@ analysis to calculate and plot confidence intervals based on a profile-likelihoo
 The code is adapted from [LMFIT](https://lmfit.github.io/lmfit-py/), with custom
 functions to select the range for parameter scanning and for plotting the profile 
 likelihood. The significance is assessed with the chi-squared distribution. 
-Optimization runs can be performed in parallel (using the `multiprocessing` module).
+Optimization runs can be performed in parallel (using the `multiprocess` module).
 
 ## Installation
 
@@ -21,11 +21,8 @@ $ pip install identifiability
 ```
 The module can be used in combination with [PySCeS](https://pysces.github.io) for 
 simulation and parameter estimation of kinetic models using the `CVODE` solver. When 
-performing identifiability analysis in parallel using `multiprocessing`, additional 
-dependences are required; these can be installed with:
-```bash
-$ pip install "identifiability[pyscesmp]"
-```
+performing identifiability analysis in parallel, the `multiprocess` module is used
+and the model class is pickled using `dill`.
 
 ## API change
 
@@ -81,6 +78,41 @@ The method for calculating the confidence intervals (`calc_all_ci()`) has severa
 additional options to specify the parameters to be varied, the probability for the
 confidence interval, the limits for the parameter variation, and whether to use a
 linear or logarithmic scale for the parameter variation. See below.
+
+### Parallel execution in scripts
+
+By default (`mp=True`), the profile likelihood is calculated in parallel. On Windows and
+macOS, worker processes are started by re-importing the main script, so when running the
+analysis from a Python script, the code that performs the fit and calls `calc_all_ci()`
+must be placed in an `if __name__ == '__main__':` block. The objective function and the
+data it uses should remain at the top level of the script:
+
+```python
+import numpy as np
+import lmfit
+from identifiability import ConfidenceInterval
+
+x = np.linspace(0.3, 10, 200)
+y = 1/(0.1*x) + 2 + 0.5*np.random.randn(x.size)
+
+def residual(p):
+    return 1/(p['a']*x) + p['b'] - y
+
+if __name__ == '__main__':
+    pars = lmfit.Parameters()
+    pars.add_many(('a', 0.1), ('b', 1))
+    mini = lmfit.Minimizer(residual, pars)
+    result = mini.minimize()
+    ci = ConfidenceInterval(mini, result)
+    print(ci.calc_all_ci())
+```
+
+Without this guard, the script fails with a `RuntimeError` about starting a new process
+before the current process has finished its bootstrapping phase, or with an error such as
+`AttributeError: module '__main__' has no attribute 'residual'`. The guard is not needed
+on Linux, but it is good practice for cross-platform scripts. When running the analysis
+from a Jupyter notebook, no guard is needed: objective functions and data defined in the
+notebook are transferred to the worker processes automatically.
 
 ### Docstrings of the `ConfidenceInterval` class and selected methods
 
@@ -171,4 +203,4 @@ class ConfidenceInterval:
 ```
 
 
-© Johann M. Rohwer, 2023&ndash;2025
+© Johann M. Rohwer, 2023&ndash;2026
