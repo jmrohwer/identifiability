@@ -3,3 +3,4 @@ scipy
 matplotlib
 lmfit
 multiprocess
+dill

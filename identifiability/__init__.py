@@ -7,12 +7,14 @@ from lmfit, with custom functions to select the range for parameter scanning and
 for plotting the profile likelihood.
 """
 
+import math
 from collections import OrderedDict
-from lmfit.minimizer import MinimizerException, Minimizer, MinimizerResult
-from lmfit.model import ModelResult
+
+import dill
 import numpy as np
 import scipy as sp
-import math
+from lmfit.minimizer import Minimizer, MinimizerException, MinimizerResult
+from lmfit.model import ModelResult
 from matplotlib import pyplot as plt
 from multiprocess import Pool
 
@@ -21,11 +23,17 @@ from .version import __version__
 CONF_ERR_GEN = 'Cannot determine Confidence Intervals'
 CONF_ERR_NVARS = '%s with < 2 variables' % CONF_ERR_GEN
 
-def _calc_dchi_worker(minimizer, params, result, method, para, val):
+def _calc_dchi_worker(state, para, val):
     """
     Module-level worker function for multiprocessing to avoid pickling issues.
     Calculates the normalised delta chi-squared for a given parameter value.
+
+    ``state`` is the (minimizer, params, result, method) tuple pickled with
+    ``dill.dumps(..., recurse=True)``, so that globals used by the objective
+    function (e.g. data defined in a Jupyter notebook) are sent along with it
+    when workers do not inherit the parent's memory (spawn on Windows/macOS).
     """
+    minimizer, params, result, method = dill.loads(state)
     para.vary = False
     para.value = val
     save_para = params[para.name]
@@ -135,7 +143,7 @@ class ConfidenceInterval:
             probability). If True, the traces are recalculated. This is useful
             if the `limits`, `points`, `method` or `log`  parameters are changed.
         mp : bool, optional
-            Run the optimization in parallel using ``multiprocessing`` (default=True)
+            Run the optimization in parallel using ``multiprocess`` (default=True)
 
         Returns
         -------
@@ -163,8 +171,8 @@ class ConfidenceInterval:
 
     def _populate_traces(self, limits, points, mp):
         if mp:
-            proc_pool = Pool()
-            arl = []
+            state = dill.dumps((self.minimizer, self.params, self.result, self.method), recurse=True)
+            tasks = []
 
         results = []
 
@@ -187,7 +195,7 @@ class ConfidenceInterval:
             for val in para_vals:
                 self.trace_dict[para.name]['value'].append(val)
                 if mp:
-                    arl.append(proc_pool.apply_async(_calc_dchi_worker, args=(self.minimizer, self.params, self.result, self.method, para, val)))
+                    tasks.append((state, para, val))
                 else:
                     results.append(self.calc_dchi(para, val))
 
@@ -195,11 +203,8 @@ class ConfidenceInterval:
             self._reset_vals()
 
         if mp:
-            arl[-1].wait()
-            for ar in arl:
-                results.append(ar.get())
-            proc_pool.terminate()
-            del proc_pool
+            with Pool() as proc_pool:
+                results = proc_pool.starmap(_calc_dchi_worker, tasks)
 
         for (para, dchi, opt_res) in results:
             self.trace_dict[para.name]['dchi'].append(dchi)
